@@ -8,6 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -19,7 +20,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -34,16 +37,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import com.example.corr.ui.theme.CorrTheme
+import com.example.corr.ui.theme.CustomFontFamily
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -57,7 +64,7 @@ class FavoritesActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+//        enableEdgeToEdge()
         setContent {
             CorrTheme {
                 Surface(
@@ -84,16 +91,33 @@ class FavoritesActivity : ComponentActivity() {
 @Composable
 fun UnauthorizedView() {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+            .padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Для просмотра избранного необходимо авторизоваться")
+        Text(
+            text = "Для просмотра избранного необходимо авторизоваться",
+            color = Color(0xFF000000),
+            fontFamily = CustomFontFamily
+        )
+
         Spacer(modifier = Modifier.height(16.dp))
+
         Button(
-            onClick = { /* Переход на экран авторизации */ }
+            onClick = { /* Переход на экран авторизации */ },
+            shape = RoundedCornerShape(24.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFD9D9D9),
+                contentColor = Color(0xFF000000)
+            )
         ) {
-            Text("Войти")
+            Text(
+                text = "Войти",
+                fontFamily = CustomFontFamily
+            )
         }
     }
 }
@@ -105,12 +129,15 @@ fun FavoritesScreen(userViewModel: UserViewModel) {
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
+    // Цвета для элементов
+    val backgroundColor = Color.White
+    val cardColor = Color(0xFFD9D9D9)
+    val textColor = Color(0xFF000000)
+
     LaunchedEffect(Unit) {
         isLoading = true
         try {
-            // Теперь мы уверены, что userId не null
             val userId = userViewModel.userId ?: return@LaunchedEffect
-
             val result = withContext(Dispatchers.IO) {
                 fetchFavorites(userId)
             }
@@ -128,7 +155,10 @@ fun FavoritesScreen(userViewModel: UserViewModel) {
     }
 
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .background(backgroundColor)
+            .statusBarsPadding()
     ) {
         Text(
             text = "Избранное",
@@ -136,9 +166,10 @@ fun FavoritesScreen(userViewModel: UserViewModel) {
                 fontWeight = FontWeight.Bold,
                 fontSize = 32.sp
             ),
+            color = textColor,
+            fontFamily = CustomFontFamily,
             modifier = Modifier
                 .padding(16.dp)
-                .statusBarsPadding()
                 .align(Alignment.CenterHorizontally)
         )
 
@@ -156,6 +187,8 @@ fun FavoritesScreen(userViewModel: UserViewModel) {
             if (favoriteFoods.isEmpty()) {
                 Text(
                     text = "У вас пока нет избранных блюд",
+                    color = textColor,
+                    fontFamily = CustomFontFamily,
                     modifier = Modifier
                         .padding(16.dp)
                         .align(Alignment.CenterHorizontally)
@@ -167,7 +200,11 @@ fun FavoritesScreen(userViewModel: UserViewModel) {
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(favoriteFoods) { food ->
-                        FoodItemCard(food = food)
+                        FoodItemCard(
+                            food = food,
+                            cardColor = cardColor,
+                            textColor = textColor
+                        )
                     }
                 }
             }
@@ -176,18 +213,21 @@ fun FavoritesScreen(userViewModel: UserViewModel) {
 }
 
 @Composable
-fun FoodItemCard(food: FoodItem) {
+fun FoodItemCard(
+    food: FoodItem,
+    cardColor: Color,
+    textColor: Color
+) {
     val context = LocalContext.current
-    val imageLoader = rememberImageLoader()
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            .padding(horizontal = 8.dp),
+        shape = RoundedCornerShape(36.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            containerColor = cardColor,
+            contentColor = textColor
         ),
         onClick = {
             val intent = Intent(context, FoodDetailActivity::class.java).apply {
@@ -199,14 +239,17 @@ fun FoodItemCard(food: FoodItem) {
             context.startActivity(intent)
         }
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            // Добавляем изображение блюда
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             AsyncImage(
                 model = food.imageUrl,
                 contentDescription = food.name,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp),
+                    .height(180.dp)
+                    .clip(RoundedCornerShape(24.dp)),
                 contentScale = ContentScale.Crop
             )
 
@@ -217,7 +260,10 @@ fun FoodItemCard(food: FoodItem) {
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Medium
-                )
+                ),
+                fontFamily = CustomFontFamily,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -225,8 +271,12 @@ fun FoodItemCard(food: FoodItem) {
             Text(
                 text = food.ingredients,
                 style = MaterialTheme.typography.bodyMedium,
+                fontFamily = CustomFontFamily,
+                color = textColor.copy(alpha = 0.8f),
                 maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }

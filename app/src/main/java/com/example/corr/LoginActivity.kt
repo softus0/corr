@@ -28,18 +28,23 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 import android.content.Context
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Color
+import androidx.core.view.WindowCompat
+import com.example.corr.ui.theme.CustomFontFamily
 
 class LoginActivity : ComponentActivity() {
     private val userViewModel: UserViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+//        enableEdgeToEdge()
+//        WindowCompat.setDecorFitsSystemWindows(window, false)
+//        window.statusBarColor = Color.Black.value.toInt()
         setContent {
             CorrTheme {
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     LoginScreen(
                         onLoginSuccess = { user ->
@@ -72,25 +77,35 @@ fun LoginScreen(onLoginSuccess: (User) -> Unit) {
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
 
+    // Цвета для элементов
+    val inputColor = Color(0xFFD9D9D9)
+    val buttonColor = Color(0xFFD9D9D9)
+    val backgroundColor = Color.White
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(32.dp),
-        verticalArrangement = Arrangement.Center,
+            .background(backgroundColor)
+            .padding(32.dp)
+            .statusBarsPadding(), // Добавляем отступ для статус-бара
+        verticalArrangement = Arrangement.Top, // Элементы будут вверху
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Заголовок
+        // Заголовок с отступом сверху
         Text(
             text = "Авторизация",
             style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 32.dp)
+            color = Color(0xFF000000),
+            fontFamily = CustomFontFamily,
+            modifier = Modifier.padding(top = 32.dp, bottom = 32.dp) // Увеличиваем отступ сверху
         )
 
-        // Поле для имени пользователя
+        // Остальной код остается без изменений
         Text(
             text = "Имя пользователя",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = Color(0xFF000000),
+            fontFamily = CustomFontFamily,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 4.dp)
@@ -99,19 +114,26 @@ fun LoginScreen(onLoginSuccess: (User) -> Unit) {
         TextField(
             value = username,
             onValueChange = { username = it },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(inputColor, RoundedCornerShape(36.dp)),
+            shape = RoundedCornerShape(36.dp),
+            colors = TextFieldDefaults.colors(
+                unfocusedContainerColor = inputColor,
+                focusedContainerColor = inputColor,
+                unfocusedIndicatorColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent
+            ),
             singleLine = true
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Поле для пароля
         Text(
             text = "Пароль",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = Color(0xFF000000),
+            fontFamily = CustomFontFamily,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 4.dp)
@@ -120,17 +142,23 @@ fun LoginScreen(onLoginSuccess: (User) -> Unit) {
         TextField(
             value = password,
             onValueChange = { password = it },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(inputColor, RoundedCornerShape(36.dp)),
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            shape = RoundedCornerShape(12.dp),
-
+            shape = RoundedCornerShape(36.dp),
+            colors = TextFieldDefaults.colors(
+                unfocusedContainerColor = inputColor,
+                focusedContainerColor = inputColor,
+                unfocusedIndicatorColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent
+            ),
             singleLine = true
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Кнопка входа
         Button(
             onClick = {
                 if (username.text.isBlank() || password.text.isBlank()) {
@@ -143,22 +171,23 @@ fun LoginScreen(onLoginSuccess: (User) -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
-            shape = RoundedCornerShape(12.dp),
-            enabled = !isLoading,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
+        shape = RoundedCornerShape(24.dp),
+        enabled = !isLoading,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = buttonColor,
+            contentColor = Color.Black
+        )
         ) {
-            Text("Войти")
-        }
+        Text(
+            text = "Войти",
+            fontFamily = CustomFontFamily
+        )
+    }
 
-        // Индикатор загрузки
         if (isLoading) {
             CircularProgressIndicator(modifier = Modifier.padding(16.dp))
         }
 
-        // Отображение ошибки
         errorMessage?.let {
             Text(
                 text = it,
@@ -167,7 +196,6 @@ fun LoginScreen(onLoginSuccess: (User) -> Unit) {
             )
         }
 
-        // Обработка авторизации
         LaunchedEffect(isLoading) {
             if (isLoading) {
                 try {

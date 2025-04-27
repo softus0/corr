@@ -48,6 +48,7 @@ fun CorrTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
+
         content = content
     )
 }

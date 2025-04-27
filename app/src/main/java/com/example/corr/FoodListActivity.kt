@@ -5,23 +5,30 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
 import coil.compose.AsyncImage
 import com.example.corr.ui.theme.CorrTheme
+import com.example.corr.ui.theme.CustomFontFamily
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -51,6 +58,11 @@ fun FoodListScreen(categoryId: Int, categoryName: String) {
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
 
+    // Цвета для элементов
+    val cardColor = Color(0xFFD9D9D9)
+    val backgroundColor = Color.White
+    val textColor = Color(0xFF000000)
+
     LaunchedEffect(categoryId) {
         isLoading = true
         try {
@@ -69,10 +81,20 @@ fun FoodListScreen(categoryId: Int, categoryName: String) {
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(backgroundColor)
+            .statusBarsPadding()
+    ) {
         Text(
             text = categoryName,
-//            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.headlineMedium.copy(
+                fontWeight = FontWeight.Bold,
+                fontSize = 24.sp
+            ),
+            color = textColor,
+            fontFamily = CustomFontFamily,
             modifier = Modifier
                 .padding(16.dp)
                 .align(Alignment.CenterHorizontally)
@@ -92,18 +114,23 @@ fun FoodListScreen(categoryId: Int, categoryName: String) {
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(foods) { food ->
-                    FoodItem(food = food) {
-                        val intent = Intent(context, FoodDetailActivity::class.java).apply {
-                            putExtra("FOOD_ID", food.id)
-                            putExtra("FOOD_NAME", food.name)
-                            putExtra("FOOD_IMAGE", food.imageUrl)
-                            putExtra("FOOD_INGREDIENTS", food.ingredients)
+                    FoodItem(
+                        food = food,
+                        cardColor = cardColor,
+                        textColor = textColor,
+                        onClick = {
+                            val intent = Intent(context, FoodDetailActivity::class.java).apply {
+                                putExtra("FOOD_ID", food.id)
+                                putExtra("FOOD_NAME", food.name)
+                                putExtra("FOOD_IMAGE", food.imageUrl)
+                                putExtra("FOOD_INGREDIENTS", food.ingredients)
+                            }
+                            context.startActivity(intent)
                         }
-                        context.startActivity(intent)
-                    }
+                    )
                 }
             }
         }
@@ -111,44 +138,61 @@ fun FoodListScreen(categoryId: Int, categoryName: String) {
 }
 
 @Composable
-fun FoodItem(food: Food, onClick: () -> Unit) {
+fun FoodItem(
+    food: Food,
+    cardColor: Color,
+    textColor: Color,
+    onClick: () -> Unit
+) {
     Card(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            .padding(horizontal = 8.dp),
+        shape = RoundedCornerShape(36.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = cardColor,
+            contentColor = textColor
+        )
     ) {
         Row(
-            modifier = Modifier.padding(8.dp),
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Изображение блюда (слева)
+            // Изображение блюда
             AsyncImage(
                 model = food.imageUrl,
                 contentDescription = food.name,
                 modifier = Modifier
                     .size(80.dp)
-                    .clip(MaterialTheme.shapes.small),
+                    .clip(RoundedCornerShape(24.dp)),
                 contentScale = ContentScale.Crop
             )
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Название и ингредиенты (справа)
-            Column(modifier = Modifier.weight(1f)) {
+            // Название и ингредиенты
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
                 Text(
                     text = food.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    fontFamily = CustomFontFamily,
+                    color = textColor
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = food.ingredients,
                     style = MaterialTheme.typography.bodySmall,
+                    fontFamily = CustomFontFamily,
+                    color = textColor.copy(alpha = 0.8f),
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }

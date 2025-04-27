@@ -23,8 +23,12 @@ import org.json.JSONObject
 import org.json.JSONArray
 import android.util.Log
 import androidx.activity.viewModels
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.style.TextAlign
 import androidx.core.view.WindowCompat
+import com.example.corr.ui.theme.CustomFontFamily
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
@@ -36,8 +40,8 @@ class MenuActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        enableEdgeToEdge()
+//        WindowCompat.setDecorFitsSystemWindows(window, false)
+//        enableEdgeToEdge()
         setContent {
             CorrTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -61,6 +65,12 @@ fun MenuScreen(userViewModel: UserViewModel) {
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
 
+    // Цвета для элементов
+    val cardColor = Color(0xFFD9D9D9)
+    val buttonColor = Color(0xFFD9D9D9)
+    val backgroundColor = Color.White
+    val textColor = Color(0xFF000000)
+
     LaunchedEffect(Unit) {
         isLoading = true
         try {
@@ -80,20 +90,21 @@ fun MenuScreen(userViewModel: UserViewModel) {
     }
 
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .background(backgroundColor)
+            .statusBarsPadding()
     ) {
-        val userId = userViewModel.userId
-        Log.d("MenuActivity", "User ID: $userId")
-
         Text(
             text = "Меню",
             style = MaterialTheme.typography.headlineLarge.copy(
                 fontWeight = FontWeight.Bold,
                 fontSize = 32.sp
             ),
+            color = textColor,
+            fontFamily = CustomFontFamily,
             modifier = Modifier
                 .padding(16.dp)
-                .statusBarsPadding()
                 .align(Alignment.CenterHorizontally)
         )
 
@@ -108,12 +119,17 @@ fun MenuScreen(userViewModel: UserViewModel) {
                     val intent = Intent(context, FavoritesActivity::class.java)
                     context.startActivity(intent)
                 },
+                modifier = Modifier.height(50.dp),
+                shape = RoundedCornerShape(24.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary,
-                    contentColor = Color.White
+                    containerColor = buttonColor,
+                    contentColor = textColor
                 )
             ) {
-                Text("Избранное")
+                Text(
+                    text = "Избранное",
+                    fontFamily = CustomFontFamily
+                )
             }
         }
 
@@ -134,13 +150,19 @@ fun MenuScreen(userViewModel: UserViewModel) {
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(menuCategories) { category ->
-                    CategoryCard(category = category) {
-                        val intent = Intent(context, FoodListActivity::class.java).apply {
-                            putExtra("CATEGORY_ID", category.id)
-                            putExtra("CATEGORY_NAME", category.name)
+                    CategoryCard(
+                        category = category,
+                        cardColor = cardColor,
+                        textColor = textColor,
+
+                        onClick = {
+                            val intent = Intent(context, FoodListActivity::class.java).apply {
+                                putExtra("CATEGORY_ID", category.id)
+                                putExtra("CATEGORY_NAME", category.name)
+                            }
+                            context.startActivity(intent)
                         }
-                        context.startActivity(intent)
-                    }
+                    )
                 }
             }
         }
@@ -148,24 +170,39 @@ fun MenuScreen(userViewModel: UserViewModel) {
 }
 
 @Composable
-fun CategoryCard(category: Category, onClick: () -> Unit) {
+fun CategoryCard(
+    category: Category,
+    cardColor: Color,
+    textColor: Color,
+    onClick: () -> Unit
+) {
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        shape = RoundedCornerShape(36.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            containerColor = cardColor,
+            contentColor = textColor
         )
     ) {
-        Text(
-            text = category.name,
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Medium
-            ),
-            modifier = Modifier.padding(16.dp)
-        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            contentAlignment = Alignment.Center // Выравнивание по центру
+        ) {
+            Text(
+                text = category.name,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Medium
+                ),
+                fontFamily = CustomFontFamily,
+                textAlign = TextAlign.Center // Центрирование текста
+            )
+        }
     }
 }
 
